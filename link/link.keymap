@@ -50,14 +50,42 @@
 
 / {
   behaviors {
-    mt_shft: mt_shft {
+    // Holding both shift modtaps turns on caps word, like QMK's
+    // BOTH_SHIFTS_TURNS_ON_CAPS_WORD: each side's hold is a shift that morphs
+    // into caps word while the other side's shift is held. The hold param
+    // (LSHFT/RSHFT) is ignored and only documents which shift is sent.
+    lsft_cw: lsft_cw {
+      compatible = "zmk,behavior-mod-morph";
+      #binding-cells = <0>;
+      bindings = <&kp LSHFT>, <&caps_word>;
+      mods = <(MOD_RSFT)>;
+    };
+
+    rsft_cw: rsft_cw {
+      compatible = "zmk,behavior-mod-morph";
+      #binding-cells = <0>;
+      bindings = <&kp RSHFT>, <&caps_word>;
+      mods = <(MOD_LSFT)>;
+    };
+
+    mt_lsft: mt_lsft {
       compatible = "zmk,behavior-hold-tap";
-      label = "shift modtap";
+      label = "left shift modtap";
       #binding-cells = <2>;
       tapping_term_ms = <125>;
       quick-tap-ms = <100>;
       flavor = "tap-preferred";
-      bindings = <&kp>, <&kp>;
+      bindings = <&lsft_cw>, <&kp>;
+    };
+
+    mt_rsft: mt_rsft {
+      compatible = "zmk,behavior-hold-tap";
+      label = "right shift modtap";
+      #binding-cells = <2>;
+      tapping_term_ms = <125>;
+      quick-tap-ms = <100>;
+      flavor = "tap-preferred";
+      bindings = <&rsft_cw>, <&kp>;
     };
 
     mt_gui: mt_gui {
@@ -104,8 +132,8 @@
         display-name = "BASE";
         bindings = <
     &kp GRAVE  &kp N1          &kp N2           &kp N3           &kp N4           &kp N5                       &kp N6 &kp N7           &kp N8           &kp N9          &kp N0             &kp EQUAL
-    &kp ESC    &mt_actl LALT Q &mt_gui  LGUI W &mt_actl LCTRL E &mt_shft LSHFT R &kp T                        &kp Y  &mt_shft RSHFT U &mt_actl RCTRL I &mt_gui  RGUI O &mt_actl LALT P    &kp LBKT
-    &caps_word &mt_gui  LGUI A &mt_actl LALT S &mt_shft LSHFT D &mt_actl LCTRL F &kp G                        &kp H  &mt_actl RCTRL J &mt_shft RSHFT K &mt_actl LALT L &mt_gui  RGUI SEMI &kp SQT
+    &kp ESC    &mt_actl LALT Q &mt_gui  LGUI W &mt_actl LCTRL E &mt_lsft LSHFT R &kp T                        &kp Y  &mt_rsft RSHFT U &mt_actl RCTRL I &mt_gui  RGUI O &mt_actl LALT P    &kp LBKT
+    &caps_word &mt_gui  LGUI A &mt_actl LALT S &mt_lsft LSHFT D &mt_actl LCTRL F &kp G                        &kp H  &mt_actl RCTRL J &mt_rsft RSHFT K &mt_actl LALT L &mt_gui  RGUI SEMI &kp SQT
     &kp LSHFT  &kp Z           &kp X            &kp C            &kp V            &kp B &kp C_MUTE  &kp C_PP &kp N  &kp M            &kp COMMA        &kp DOT         &kp FSLH           &kp RSHFT
                                &kp LGUI         &kp LALT         &lt BOARD TAB    &lt FUN ESC &lt NUM BSPC  &lt_spc MOUSE SPACE &lt NAV ENTER &lt BOARD DEL &kp RALT &kp RGUI
         >;
@@ -117,8 +145,8 @@
         display-name = "NUM";
         bindings = <
     &trans    &trans             &trans           &trans              &trans              &trans                    &trans    &trans              &trans               &trans             &trans             &trans
-    &kp GRAVE &mt_actl LALT EXCL &mt_gui  LGUI AT &mt_actl LCTRL HASH &mt_shft LSHFT DLLR &kp PRCNT                 &kp CARET &mt_shft RSHFT AMPS &mt_actl RCTRL ASTRK &mt_gui  RGUI LPAR &mt_actl LALT RPAR &kp EQUAL
-    &kp TILDE &mt_gui  LGUI N1   &mt_actl LALT N2 &mt_shft LSHFT N3   &mt_actl LCTRL N4   &kp N5                    &kp N6    &mt_actl RCTRL N7   &mt_shft RSHFT N8    &mt_actl LALT N9   &mt_gui  RGUI N0   &kp MINUS
+    &kp GRAVE &mt_actl LALT EXCL &mt_gui  LGUI AT &mt_actl LCTRL HASH &mt_lsft LSHFT DLLR &kp PRCNT                 &kp CARET &mt_rsft RSHFT AMPS &mt_actl RCTRL ASTRK &mt_gui  RGUI LPAR &mt_actl LALT RPAR &kp EQUAL
+    &kp TILDE &mt_gui  LGUI N1   &mt_actl LALT N2 &mt_lsft LSHFT N3   &mt_actl LCTRL N4   &kp N5                    &kp N6    &mt_actl RCTRL N7   &mt_rsft RSHFT N8    &mt_actl LALT N9   &mt_gui  RGUI N0   &kp MINUS
     &trans    &kp GRAVE          &kp TILDE        &kp E               &kp UNDER           &kp PLUS  &trans   &trans &kp LS(Z) &kp RBKT            &kp RBRC             &kp PIPE           &kp BSLH           &trans
                                  &trans           &trans              &trans              &trans    &trans   &trans &trans    &trans              &trans               &trans
         >;
@@ -172,8 +200,8 @@
         display-name = "DVORAK";
         bindings = <
     &trans     &trans            &trans              &trans             &trans           &trans                 &trans &trans           &trans           &trans          &trans          &trans
-    &kp ESC    &mt_actl LALT SQT &mt_gui  LGUI COMMA &mt_actl LCTRL DOT &mt_shft LSHFT P &kp Y                  &kp F  &mt_shft RSHFT G &mt_actl RCTRL C &mt_gui  RGUI R &mt_actl LALT L &kp FSLH
-    &caps_word &mt_gui  LGUI A   &mt_actl LALT O     &mt_shft LSHFT E   &mt_actl LCTRL U &kp I                  &kp D  &mt_actl RCTRL H &mt_shft RSHFT T &mt_actl LALT N &mt_gui  RGUI S &kp MINUS
+    &kp ESC    &mt_actl LALT SQT &mt_gui  LGUI COMMA &mt_actl LCTRL DOT &mt_lsft LSHFT P &kp Y                  &kp F  &mt_rsft RSHFT G &mt_actl RCTRL C &mt_gui  RGUI R &mt_actl LALT L &kp FSLH
+    &caps_word &mt_gui  LGUI A   &mt_actl LALT O     &mt_lsft LSHFT E   &mt_actl LCTRL U &kp I                  &kp D  &mt_actl RCTRL H &mt_rsft RSHFT T &mt_actl LALT N &mt_gui  RGUI S &kp MINUS
     &kp LSHFT  &kp SEMI          &kp Q               &kp J              &kp K            &kp X &trans    &trans &kp B  &kp M            &kp W            &kp V           &kp Z           &kp RSHFT
                                  &trans              &trans             &trans           &trans &trans   &trans &trans &trans           &trans           &trans
         >;
