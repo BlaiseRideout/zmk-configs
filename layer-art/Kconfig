@@ -1,0 +1,11 @@
+config ZMK_LAYER_ART
+    bool "nice!view status screen with per-layer pixel art"
+    default y
+    depends on SHIELD_NICE_VIEW && ZMK_DISPLAY_STATUS_SCREEN_CUSTOM && !NICE_VIEW_WIDGET_STATUS
+    select LV_USE_CANVAS
+    select LV_USE_IMG
+    select LV_USE_IMAGE
+    select LV_FONT_MONTSERRAT_16
+    help
+      Replaces the stock nice!view status screen (set CONFIG_NICE_VIEW_WIDGET_STATUS=n)
+      with a battery/connection strip and pixel art for the highest active layer.
