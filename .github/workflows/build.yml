@@ -5,11 +5,3 @@ jobs:
     uses: zmkfirmware/zmk/.github/workflows/build-user-config.yml@main
     with:
       config_path: corne
-  # Pinned to v0.3 (Zephyr 3.5, matching the cannonkeys fork): later versions
-  # add a ZMK board compat check that the link board fails.
-  build-link:
-    uses: zmkfirmware/zmk/.github/workflows/build-user-config.yml@v0.3
-    with:
-      build_matrix_path: build-link.yaml
-      config_path: link
-      archive_name: firmware-link
