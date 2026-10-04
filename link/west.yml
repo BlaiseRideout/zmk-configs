@@ -1,16 +1,17 @@
-# The Cannonkeys Link board definition targets Cannonkeys' ZMK fork (Zephyr 3.5),
-# which is incompatible with upstream ZMK main used by the corne config, so the
-# Link is built from this separate config directory with its own manifest.
+# The Cannonkeys Link board definition requires Zephyr 3.5, which is incompatible
+# with upstream ZMK main used by the corne config, so the Link is built from this
+# separate config directory with its own manifest. caps-word-v0.3 is upstream's
+# v0.3-branch plus zmkfirmware/zmk#1742 (caps word shift-list).
 manifest:
   remotes:
-    - name: awkannan
-      url-base: https://github.com/awkannan
+    - name: blaise
+      url-base: https://github.com/BlaiseRideout
     - name: cannonkeys
       url-base: https://github.com/cannonkeys
   projects:
     - name: zmk
-      remote: awkannan
-      revision: develop
+      remote: blaise
+      revision: caps-word-v0.3
       import: app/west.yml
     - name: zmk-cannonkeys-keyboards
       remote: cannonkeys

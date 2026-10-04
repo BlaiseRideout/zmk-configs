@@ -33,7 +33,8 @@
 };
 
 &caps_word {
-  continue-list = <UNDERSCORE MINUS BACKSPACE DELETE SEMI SQT DOT COMMA SLASH>;
+  shift-list = <MINUS>;
+  continue-list = <UNDERSCORE BACKSPACE DELETE SEMI SQT DOT COMMA SLASH>;
 };
 
 &mmv {
