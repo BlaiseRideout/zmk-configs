@@ -2,15 +2,17 @@
 """Generate images.c from the 128x32 art/*.png files (QMK OLED art, landscape,
 drawn rotated 90 degrees like the nice!view's native orientation).
 
-Viewed upright each piece of art is a 32x128 figure: a skull and the layer icon
-(rows 0-69) above a scythe (rows 70-127). Everything is scaled a clean 2x:
+Viewed upright each piece of art is a 32x128 figure: a skull (rows 0-31) and the
+layer icon box (rows 38-69) above a scythe (rows 75-127). Everything is scaled a
+clean 2x and laid out in the 64x140 upright area below the 20px status strip:
 
-- art_<name>: the skull and layer icon, for the central half. 140x64 (a 64x140
-  column upright), exactly filling the area below the status strip.
+- art_<name>: the skull and layer icon box, for the central half, with the 12px
+  of spare height split evenly above, between and below them.
 - art_scythe: the scythe, which must be identical in every PNG, for the
-  peripheral half. 116x64, centred in the same area.
+  peripheral half, centred.
 
-Each image is a 140x68 1-bit LVGL image with the art centred vertically.
+Each image is a 140x68 1-bit LVGL image (the upright area rotated to the
+nice!view's native orientation) with the art centred across the 68px width.
 
 Usage: ./gen_images.py  (requires Pillow)
 """
@@ -21,10 +23,13 @@ from PIL import Image
 HERE = Path(__file__).parent
 SRC_W, SRC_H = 128, 32
 SCALE = 2
-# Native (landscape) columns; upright row r is native column 127 - r.
-SCYTHE_COLS = (0, 58)
-SKULL_COLS = (58, 128)
-OUT_W, OUT_H = 140, 68
+# Upright rows of each piece
+SKULL_ROWS = (0, 32)
+ICON_ROWS = (38, 70)
+SCYTHE_ROWS = (75, 128)
+# Upright art area, and the native image it is rotated into
+AREA_W, AREA_H = 64, 140
+OUT_W, OUT_H = AREA_H, 68
 STRIDE = (OUT_W + 7) // 8
 
 HEADER = """\
@@ -69,21 +74,37 @@ HEADER = """\
 def load(path):
     src = Image.open(path).convert("1")
     assert src.size == (SRC_W, SRC_H), f"{path} must be {SRC_W}x{SRC_H}"
-    return src
+    return src.rotate(90, expand=True)  # upright, 32x128
 
 
-def render(piece):
-    """Scale piece 2x and centre it in an OUT_W x OUT_H image, as packed 1-bit rows."""
-    w, h = piece.width * SCALE, piece.height * SCALE
-    assert w <= OUT_W and h <= OUT_H
-    x0, y0 = (OUT_W - w) // 2, (OUT_H - h) // 2
+def piece(upright, rows):
+    p = upright.crop((0, rows[0], SRC_H, rows[1]))
+    return p.resize((p.width * SCALE, p.height * SCALE), Image.NEAREST)
+
+
+def stack(pieces):
+    """Lay pieces out top to bottom in the upright area with equal gaps around them."""
+    gap = (AREA_H - sum(p.height for p in pieces)) // (len(pieces) + 1)
+    assert gap >= 0
+    area = Image.new("1", (AREA_W, AREA_H))
+    y = gap
+    for p in pieces:
+        area.paste(p, ((AREA_W - p.width) // 2, y))
+        y += p.height + gap
+    return area
+
+
+def pack(area):
+    """Rotate the upright area to native orientation, centre it, pack as 1-bit rows."""
+    native = area.rotate(-90, expand=True)
+    y0 = (OUT_H - native.height) // 2
     rows = []
     for y in range(OUT_H):
         row = bytearray(STRIDE)
-        for x in range(OUT_W):
-            sx, sy = (x - x0) // SCALE, (y - y0) // SCALE
-            if 0 <= x - x0 < w and 0 <= y - y0 < h and piece.getpixel((sx, sy)):
-                row[x // 8] |= 0x80 >> (x % 8)
+        if 0 <= y - y0 < native.height:
+            for x in range(OUT_W):
+                if native.getpixel((x, y - y0)):
+                    row[x // 8] |= 0x80 >> (x % 8)
         rows.append(row)
     return rows
 
@@ -100,13 +121,14 @@ def main():
     out = [HEADER.replace("{w}", str(OUT_W)).replace("{h}", str(OUT_H))]
     scythe = None
     for path in sorted((HERE / "art").glob("*.png")):
-        src = load(path)
-        out += emit("art_" + path.stem, render(src.crop((SKULL_COLS[0], 0, SKULL_COLS[1], SRC_H))))
+        upright = load(path)
+        out += emit("art_" + path.stem, pack(stack([piece(upright, SKULL_ROWS),
+                                                     piece(upright, ICON_ROWS)])))
 
-        piece = src.crop((SCYTHE_COLS[0], 0, SCYTHE_COLS[1], SRC_H))
-        assert scythe is None or piece.tobytes() == scythe.tobytes(), f"{path}: scythe differs"
-        scythe = piece
-    out += emit("art_scythe", render(scythe))
+        p = piece(upright, SCYTHE_ROWS)
+        assert scythe is None or p.tobytes() == scythe.tobytes(), f"{path}: scythe differs"
+        scythe = p
+    out += emit("art_scythe", pack(stack([scythe])))
     (HERE / "images.c").write_text("".join(out))
 
 
