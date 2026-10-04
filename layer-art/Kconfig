@@ -1,11 +1,13 @@
 config ZMK_LAYER_ART
     bool "nice!view status screen with per-layer pixel art"
     default y
-    depends on SHIELD_NICE_VIEW && ZMK_DISPLAY_STATUS_SCREEN_CUSTOM && !NICE_VIEW_WIDGET_STATUS
+    depends on SHIELD_LAYER_ART && SHIELD_NICE_VIEW && ZMK_DISPLAY_STATUS_SCREEN_CUSTOM && !NICE_VIEW_WIDGET_STATUS
     select LV_USE_CANVAS
     select LV_USE_IMG
     select LV_USE_IMAGE
     select LV_FONT_MONTSERRAT_16
     help
-      Replaces the stock nice!view status screen (set CONFIG_NICE_VIEW_WIDGET_STATUS=n)
-      with a battery/connection strip and pixel art for the highest active layer.
+      Replaces the stock nice!view status screen with a battery/connection strip
+      and pixel art: a skull and the highest active layer's icon on the central,
+      a scythe and the central's BLE profiles on the peripheral. Enabled by adding
+      the layer_art shield after nice_view.

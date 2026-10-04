@@ -2,6 +2,6 @@
 ---
 include:
   - board: link_left
-    shield: nice_view
+    shield: nice_view layer_art
   - board: link_right
-    shield: nice_view
+    shield: nice_view layer_art

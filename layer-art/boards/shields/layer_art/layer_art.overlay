@@ -1,0 +1,14 @@
+/*
+ * SPDX-License-Identifier: MIT
+ */
+
+/ {
+    behaviors {
+        // Invoked by the central over the split link to show its active BLE
+        // profile on the peripheral. The name must be at most 8 characters.
+        bt_prof: bt_prof {
+            compatible = "zmk,behavior-layer-art-profile";
+            #binding-cells = <2>;
+        };
+    };
+};

@@ -1,7 +1,8 @@
 /*
  * nice!view status screen: a battery and connection status strip, plus pixel art.
  * The central shows a skull above an icon for the highest active layer, the
- * peripheral shows a scythe.
+ * peripheral shows a scythe with the central's BLE profiles, which the central
+ * relays by invoking the bt_prof behavior (behavior_profile.c) on it.
  * The layout matches the stock nice!view peripheral screen.
  *
  * SPDX-License-Identifier: MIT
@@ -19,6 +20,7 @@
 #include <zmk/events/usb_conn_state_changed.h>
 #include <zmk/usb.h>
 
+#include "layer_art.h"
 #include "util.h"
 
 #define IS_CENTRAL (!IS_ENABLED(CONFIG_ZMK_SPLIT) || IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL))
@@ -30,6 +32,11 @@
 #include <zmk/events/ble_active_profile_changed.h>
 #include <zmk/events/endpoint_changed.h>
 #include <zmk/events/layer_state_changed.h>
+#if IS_ENABLED(CONFIG_ZMK_SPLIT)
+#include <zephyr/bluetooth/conn.h>
+#include <zmk/behavior.h>
+#include <zmk/split/central.h>
+#endif
 #else
 #include <zmk/split/bluetooth/peripheral.h>
 #include <zmk/events/split_peripheral_status_changed.h>
@@ -76,7 +83,7 @@ static const struct {
 #define INITIAL_ART art_empty
 #else
 LV_IMG_DECLARE(art_scythe);
-#define INITIAL_ART art_scythe
+extern const lv_img_dsc_t *const art_bt_profiles[5][2];
 #endif
 
 static struct status_state state;
@@ -191,7 +198,76 @@ static struct layer_art_state layer_art_get_state(const zmk_event_t *eh) {
 ZMK_DISPLAY_WIDGET_LISTENER(widget_layer_art, struct layer_art_state, layer_art_update_cb,
                             layer_art_get_state)
 ZMK_SUBSCRIPTION(widget_layer_art, zmk_layer_state_changed);
+
+#if IS_ENABLED(CONFIG_ZMK_SPLIT)
+static void send_profile(void) {
+    struct zmk_behavior_binding binding = {
+        .behavior_dev = LAYER_ART_PROFILE_BEHAVIOR,
+        .param1 = zmk_ble_active_profile_index(),
+        .param2 = zmk_ble_active_profile_is_connected(),
+    };
+    struct zmk_behavior_binding_event event = {.timestamp = k_uptime_get()};
+
+    for (int i = 0; i < ZMK_SPLIT_CENTRAL_PERIPHERAL_COUNT; i++) {
+        zmk_split_central_invoke_behavior(i, &binding, event, true);
+    }
+}
+
+static int profile_changed_listener(const zmk_event_t *eh) {
+    send_profile();
+    return ZMK_EV_EVENT_BUBBLE;
+}
+
+ZMK_LISTENER(layer_art_profile, profile_changed_listener);
+ZMK_SUBSCRIPTION(layer_art_profile, zmk_ble_active_profile_changed);
+
+// Sends are dropped until a peripheral is connected and its services discovered,
+// with no event when that happens, so resend a few times after any connection.
+static int resends_left;
+
+static void resend_work_cb(struct k_work *work) {
+    send_profile();
+    if (--resends_left > 0) {
+        k_work_reschedule(k_work_delayable_from_work(work), K_SECONDS(2));
+    }
+}
+
+static K_WORK_DELAYABLE_DEFINE(resend_work, resend_work_cb);
+
+static void connected(struct bt_conn *conn, uint8_t err) {
+    if (!err) {
+        resends_left = 3;
+        k_work_reschedule(&resend_work, K_SECONDS(1));
+    }
+}
+
+BT_CONN_CB_DEFINE(layer_art_conn_callbacks) = {.connected = connected};
+#endif
 #else
+// Central's active BLE profile: index * 2 + connected, or -1 until it is relayed
+static atomic_t profile = ATOMIC_INIT(-1);
+
+static const lv_img_dsc_t *peripheral_art(void) {
+    atomic_val_t p = atomic_get(&profile);
+    if (p < 0 || p / 2 >= ARRAY_SIZE(art_bt_profiles)) {
+        return &art_scythe;
+    }
+    return art_bt_profiles[p / 2][p % 2];
+}
+
+static void profile_work_cb(struct k_work *work) {
+    if (art) {
+        IMG_SET_SRC(art, peripheral_art());
+    }
+}
+
+static K_WORK_DEFINE(profile_work, profile_work_cb);
+
+void layer_art_set_profile(uint32_t index, bool connected) {
+    atomic_set(&profile, index * 2 + (connected ? 1 : 0));
+    k_work_submit_to_queue(zmk_display_work_q(), &profile_work);
+}
+
 struct peripheral_status_state {
     bool connected;
 };
@@ -199,6 +275,10 @@ struct peripheral_status_state {
 static void peripheral_status_update_cb(struct peripheral_status_state ps) {
     state.connected = ps.connected;
     draw_top();
+    if (!ps.connected) {
+        atomic_set(&profile, -1);
+        IMG_SET_SRC(art, peripheral_art());
+    }
 }
 
 static struct peripheral_status_state peripheral_status_get_state(const zmk_event_t *eh) {
@@ -223,7 +303,11 @@ lv_obj_t *zmk_display_status_screen(void) {
     lv_canvas_set_buffer(top_canvas, cbuf, CANVAS_SIZE, CANVAS_SIZE, CANVAS_FORMAT);
 
     art = lv_img_create(widget);
-    IMG_SET_SRC(art, &INITIAL_ART);
+#if IS_CENTRAL
+    IMG_SET_SRC(art, &art_empty);
+#else
+    IMG_SET_SRC(art, peripheral_art());
+#endif
     lv_obj_align(art, LV_ALIGN_TOP_LEFT, 0, 0);
 
     widget_battery_status_init();

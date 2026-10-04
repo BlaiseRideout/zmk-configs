@@ -1,0 +1,7 @@
+description: |
+  Shows the central's active BLE profile on the layer art peripheral screen.
+  param1 is the profile index, param2 is 1 when the profile is connected.
+
+compatible: "zmk,behavior-layer-art-profile"
+
+include: two_param.yaml

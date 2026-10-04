@@ -10,4 +10,7 @@ if(CONFIG_ZMK_LAYER_ART)
     ${NICE_VIEW_WIDGETS}/util.c
     ${NICE_VIEW_WIDGETS}/bolt.c
   )
+  if(CONFIG_ZMK_SPLIT AND NOT CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
+    zephyr_library_sources(behavior_profile.c)
+  endif()
 endif()
