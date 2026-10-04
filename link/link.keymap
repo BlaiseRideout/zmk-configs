@@ -33,8 +33,11 @@
 };
 
 &caps_word {
-  shift-list = <MINUS>;
-  continue-list = <UNDERSCORE BACKSPACE DELETE SEMI SQT DOT COMMA SLASH>;
+  // MINUS: qwerty underscore. SEMI COMMA DOT FSLH SQT: the qwerty keycodes of
+  // s w v z and - when the OS is set to dvorak, so those letters and the
+  // underscore are shifted too. Shift-list keys also continue caps word.
+  shift-list = <MINUS SEMI COMMA DOT FSLH SQT>;
+  continue-list = <UNDERSCORE BACKSPACE DELETE>;
 };
 
 &mmv {
