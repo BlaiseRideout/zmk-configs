@@ -1,12 +1,13 @@
 manifest:
   remotes:
-    - name: zmkfirmware
-      url-base: https://github.com/zmkfirmware
+    - name: blaise
+      url-base: https://github.com/BlaiseRideout
     # Additional modules containing boards/shields/custom code can be listed here as well
     # See https://docs.zephyrproject.org/3.2.0/develop/west/manifest.html#projects
   projects:
+    # upstream zmk main plus zmkfirmware/zmk#1742 (caps word shift-list)
     - name: zmk
-      remote: zmkfirmware
+      remote: blaise
       revision: main
       import: app/west.yml
   self:
