@@ -1,6 +1,7 @@
 /*
- * nice!view status screen: a battery and connection status strip, plus pixel art
- * for the highest active layer on the central (fixed art on the peripheral).
+ * nice!view status screen: a battery and connection status strip, plus pixel art.
+ * The central shows a skull above an icon for the highest active layer, the
+ * peripheral shows a scythe.
  * The layout matches the stock nice!view peripheral screen.
  *
  * SPDX-License-Identifier: MIT
@@ -52,7 +53,6 @@
 #define IMG_SET_SRC lv_img_set_src
 #endif
 
-LV_IMG_DECLARE(art_death_sensei);
 #if IS_CENTRAL
 LV_IMG_DECLARE(art_aoeu);
 LV_IMG_DECLARE(art_arrows);
@@ -73,6 +73,10 @@ static const struct {
     {"FUN", &art_copland},  {"MOUSE", &art_mouse}, {"BOARD", &art_gears},
     {"DVORAK", &art_aoeu},  {"GAME", &art_game},
 };
+#define INITIAL_ART art_empty
+#else
+LV_IMG_DECLARE(art_scythe);
+#define INITIAL_ART art_scythe
 #endif
 
 static struct status_state state;
@@ -219,7 +223,7 @@ lv_obj_t *zmk_display_status_screen(void) {
     lv_canvas_set_buffer(top_canvas, cbuf, CANVAS_SIZE, CANVAS_SIZE, CANVAS_FORMAT);
 
     art = lv_img_create(widget);
-    IMG_SET_SRC(art, &art_death_sensei);
+    IMG_SET_SRC(art, &INITIAL_ART);
     lv_obj_align(art, LV_ALIGN_TOP_LEFT, 0, 0);
 
     widget_battery_status_init();

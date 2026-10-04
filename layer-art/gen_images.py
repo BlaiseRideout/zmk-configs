@@ -2,9 +2,15 @@
 """Generate images.c from the 128x32 art/*.png files (QMK OLED art, landscape,
 drawn rotated 90 degrees like the nice!view's native orientation).
 
-Each image is scaled 1.25x to 160x40 (nearest neighbour), the leftmost 20 columns
-(the bottom of the art when viewed upright) are cropped to leave room for the
-status strip, and the result is centred vertically in a 140x68 1-bit image.
+Viewed upright each piece of art is a 32x128 figure: a skull and the layer icon
+(rows 0-69) above a scythe (rows 70-127). Everything is scaled a clean 2x:
+
+- art_<name>: the skull and layer icon, for the central half. 140x64 (a 64x140
+  column upright), exactly filling the area below the status strip.
+- art_scythe: the scythe, which must be identical in every PNG, for the
+  peripheral half. 116x64, centred in the same area.
+
+Each image is a 140x68 1-bit LVGL image with the art centred vertically.
 
 Usage: ./gen_images.py  (requires Pillow)
 """
@@ -14,14 +20,12 @@ from PIL import Image
 
 HERE = Path(__file__).parent
 SRC_W, SRC_H = 128, 32
-SCALED_W, SCALED_H = 160, 40
-CROP_LEFT = 20
-OUT_W, OUT_H = SCALED_W - CROP_LEFT, 68
-Y_OFFSET = (OUT_H - SCALED_H) // 2
+SCALE = 2
+# Native (landscape) columns; upright row r is native column 127 - r.
+SCYTHE_COLS = (0, 58)
+SKULL_COLS = (58, 128)
+OUT_W, OUT_H = 140, 68
 STRIDE = (OUT_W + 7) // 8
-# Art drawn for QMK's peripheral OLED, which used OLED_ROTATION_180. ZMK draws the
-# nice!view the same way up on both halves.
-ROTATE_180 = {"death_sensei"}
 
 HEADER = """\
 /*
@@ -62,31 +66,47 @@ HEADER = """\
 """
 
 
-def convert(path):
+def load(path):
     src = Image.open(path).convert("1")
     assert src.size == (SRC_W, SRC_H), f"{path} must be {SRC_W}x{SRC_H}"
-    if path.stem in ROTATE_180:
-        src = src.rotate(180)
+    return src
+
+
+def render(piece):
+    """Scale piece 2x and centre it in an OUT_W x OUT_H image, as packed 1-bit rows."""
+    w, h = piece.width * SCALE, piece.height * SCALE
+    assert w <= OUT_W and h <= OUT_H
+    x0, y0 = (OUT_W - w) // 2, (OUT_H - h) // 2
     rows = []
     for y in range(OUT_H):
-        sy = y - Y_OFFSET
         row = bytearray(STRIDE)
-        if 0 <= sy < SCALED_H:
-            for x in range(OUT_W):
-                if src.getpixel(((x + CROP_LEFT) * SRC_W // SCALED_W, sy * SRC_H // SCALED_H)):
-                    row[x // 8] |= 0x80 >> (x % 8)
+        for x in range(OUT_W):
+            sx, sy = (x - x0) // SCALE, (y - y0) // SCALE
+            if 0 <= x - x0 < w and 0 <= y - y0 < h and piece.getpixel((sx, sy)):
+                row[x // 8] |= 0x80 >> (x % 8)
         rows.append(row)
     return rows
 
 
+def emit(name, rows):
+    out = [f"\nstatic const uint8_t {name}_map[] = {{\n    ART_PALETTE\n"]
+    for row in rows:
+        out.append("    " + " ".join(f"0x{b:02x}," for b in row) + "\n")
+    out.append(f"}};\nART_DSC({name});\n")
+    return out
+
+
 def main():
     out = [HEADER.replace("{w}", str(OUT_W)).replace("{h}", str(OUT_H))]
+    scythe = None
     for path in sorted((HERE / "art").glob("*.png")):
-        name = "art_" + path.stem
-        out.append(f"\nstatic const uint8_t {name}_map[] = {{\n    ART_PALETTE\n")
-        for row in convert(path):
-            out.append("    " + " ".join(f"0x{b:02x}," for b in row) + "\n")
-        out.append(f"}};\nART_DSC({name});\n")
+        src = load(path)
+        out += emit("art_" + path.stem, render(src.crop((SKULL_COLS[0], 0, SKULL_COLS[1], SRC_H))))
+
+        piece = src.crop((SCYTHE_COLS[0], 0, SCYTHE_COLS[1], SRC_H))
+        assert scythe is None or piece.tobytes() == scythe.tobytes(), f"{path}: scythe differs"
+        scythe = piece
+    out += emit("art_scythe", render(scythe))
     (HERE / "images.c").write_text("".join(out))
 
 
