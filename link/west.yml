@@ -1,0 +1,19 @@
+# The Cannonkeys Link board definition targets Cannonkeys' ZMK fork (Zephyr 3.5),
+# which is incompatible with upstream ZMK main used by the corne config, so the
+# Link is built from this separate config directory with its own manifest.
+manifest:
+  remotes:
+    - name: awkannan
+      url-base: https://github.com/awkannan
+    - name: cannonkeys
+      url-base: https://github.com/cannonkeys
+  projects:
+    - name: zmk
+      remote: awkannan
+      revision: develop
+      import: app/west.yml
+    - name: zmk-cannonkeys-keyboards
+      remote: cannonkeys
+      revision: main
+  self:
+    path: link

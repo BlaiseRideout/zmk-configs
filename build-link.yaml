@@ -1,0 +1,7 @@
+# Build matrix for the Cannonkeys Link, see link/west.yml
+---
+include:
+  - board: link_left
+    shield: nice_view
+  - board: link_right
+    shield: nice_view
