@@ -11,10 +11,11 @@ clean 2x and laid out in the 64x140 upright area below the 20px status strip:
 - art_scythe: the scythe, which must be identical in every PNG, for the
   peripheral half, centred.
 - art_bt<n>_<on|off>: the scythe with the central's BLE profiles as numbered
-  circles: profile <n> large at the centre of the blade's arc (filled when
-  connected), the others in a 2x2 grid below it, left of the handle. Drawn at
-  the art's 1x resolution before scaling, keeping 2px (4px on screen) clear of
-  the scythe.
+  circles. Profile <n> is a large circle between the blade tip and the handle
+  (filled when connected), drawn at the art's 1x resolution 2px (4px on screen)
+  clear of the scythe. The others are a 2x2 grid centred below it, drawn at
+  screen resolution with 2px lines; the grid's right column comes within 2px of
+  the handle where it widens.
 
 Each image is a 140x68 1-bit LVGL image (the upright area rotated to the
 nice!view's native orientation) with the art centred across the 68px width.
@@ -33,23 +34,28 @@ SCALE = 2
 SKULL_ROWS = (0, 32)
 ICON_ROWS = (38, 70)
 SCYTHE_ROWS = (75, 128)
-# Profile circles in 1x scythe coordinates: (centre x, centre y, diameter). The
-# active one is centred on the blade's arc (a circle fit to its inner edge gives
-# (12.9, 18.4)) and as large as the padding allows.
 PROFILE_COUNT = 5
-ACTIVE_CIRCLE = (12.5, 18.5, 14)
-INACTIVE_CIRCLES = [(5.5, 33.5, 11), (18.5, 33.5, 11), (5.5, 46.5, 11), (18.5, 46.5, 11)]
-PADDING = 2
+# Active profile circle in 1x scythe coordinates: (centre x, centre y, diameter).
+# Centred between the 2px wide part of the blade tip (columns 0-1) and the
+# handle (column 27), as high as the padding allows.
+ACTIVE_CIRCLE = (14.5, 21.5, 17)
+ACTIVE_PADDING = 2
+# Inactive profile grid in screen pixels: circle diameter and gap between them,
+# centred under the active circle and the same gap below it.
+INACTIVE_DIAMETER = 20
+INACTIVE_GAP = 2
+INACTIVE_TOP_GAP = 4
+INACTIVE_PADDING = 2
 DIGITS_3X5 = {
     1: ".#.##..#..#.###", 2: "##...#.#.#..###", 3: "##...#.#...###.",
     4: "#.##.####..#..#", 5: "####..##...###.",
 }
-DIGITS_5X7 = {
-    1: "..#...##....#....#....#....#...###.",
-    2: ".###.#...#....#...#...#...#...#####",
-    3: "####.....#....#.###.....#....#####.",
-    4: "...#...##..#.#.#..#.#####...#....#.",
-    5: "######....####.....#....##...#.###.",
+DIGITS_5X9 = {
+    1: "..#...##..#.#....#....#....#....#....#..#####",
+    2: ".###.#...#....#....#...#...#...#...#....#####",
+    3: ".###.#...#....#....#..##.....#....##...#.###.",
+    4: "...#...##..#.#.#..#.#..#.#####...#....#....#.",
+    5: "######....#....####.....#....#....##...#.###.",
 }
 # Upright art area, and the native image it is rotated into
 AREA_W, AREA_H = 64, 140
@@ -116,32 +122,56 @@ def disc(cx, cy, d):
             if math.hypot(x + 0.5 - cx, y + 0.5 - cy) <= r}
 
 
-def digit(n, cx, cy, font, w, h):
-    x0, y0 = round(cx - w / 2), round(cy - h / 2)
-    return {(x0 + i % w, y0 + i // w) for i, c in enumerate(font[n]) if c == "#"}
+def ring(cx, cy, d, width=1):
+    return disc(cx, cy, d) - disc(cx, cy, d - 2 * width)
+
+
+def digit(n, cx, cy, font, w, h, scale=1):
+    """A digit centred on (cx, cy), with each font pixel drawn scale x scale."""
+    x0, y0 = math.floor(cx - w * scale / 2), math.floor(cy - h * scale / 2)
+    return {(x0 + (i % w) * scale + dx, y0 + (i // w) * scale + dy)
+            for i, c in enumerate(font[n]) if c == "#" for dx in range(scale) for dy in range(scale)}
+
+
+def ink(image):
+    return {(x, y) for x in range(image.width) for y in range(image.height) if image.getpixel((x, y))}
+
+
+def clearance(shapes, art):
+    """Empty pixels between shapes and art (Chebyshev distance - 1)."""
+    return min(max(abs(x - a), abs(y - b)) for x, y in shapes for a, b in art) - 1
+
+
+def draw(image, on, off=frozenset()):
+    assert all(0 <= x < image.width and 0 <= y < image.height for x, y in on)
+    for xy in on - off:
+        image.putpixel(xy, 1)
 
 
 def profiles(scythe, active, connected):
-    """The 1x scythe with profile circles drawn on it (profiles numbered from 1)."""
+    """The upright area with the scythe and profile circles (profiles numbered from 1)."""
     cx, cy, d = ACTIVE_CIRCLE
-    if connected:
-        on, off = disc(cx, cy, d), digit(active, cx, cy, DIGITS_5X7, 5, 7)
-    else:
-        on, off = (disc(cx, cy, d) - disc(cx, cy, d - 2)) | digit(active, cx, cy, DIGITS_5X7, 5, 7), set()
-    others = [n for n in range(1, PROFILE_COUNT + 1) if n != active]
-    for n, (cx, cy, d) in zip(others, INACTIVE_CIRCLES):
-        on |= (disc(cx, cy, d) - disc(cx, cy, d - 2)) | digit(n, cx, cy, DIGITS_3X5, 3, 5)
-
-    ink = {(x, y) for x in range(scythe.width) for y in range(scythe.height) if scythe.getpixel((x, y))}
-    shapes = on | off
-    assert all(0 <= x < scythe.width and 0 <= y < scythe.height for x, y in shapes)
-    assert min(max(abs(x - a), abs(y - b)) for x, y in shapes for a, b in ink) > PADDING, \
-        "profile circles too close to the scythe"
-
+    num = digit(active, cx, cy, DIGITS_5X9, 5, 9)
+    on, off = (disc(cx, cy, d), num) if connected else (ring(cx, cy, d) | num, set())
+    assert clearance(on, ink(scythe)) >= ACTIVE_PADDING, "active profile too close to the scythe"
     p = scythe.copy()
-    for xy in on - off:
-        p.putpixel(xy, 1)
-    return p
+    draw(p, on, off)
+
+    area = stack([scale(p)])
+    y0 = (AREA_H - scale(p).height) // 2  # where stack() put the scythe
+    gx, size, gap = cx * SCALE, INACTIVE_DIAMETER, INACTIVE_GAP
+    top = y0 + max(y for _, y in disc(cx, cy, d)) * SCALE + SCALE + INACTIVE_TOP_GAP
+    left = gx - size - gap / 2
+    centres = [(left + size / 2 + col * (size + gap), top + size / 2 + row * (size + gap))
+               for row in (0, 1) for col in (0, 1)]
+    others = [n for n in range(1, PROFILE_COUNT + 1) if n != active]
+    grid = set()
+    for n, (x, y) in zip(others, centres):
+        grid |= ring(x, y, size, SCALE) | digit(n, x, y, DIGITS_3X5, 3, 5, SCALE)
+    assert clearance(grid, ink(stack([scale(scythe)]))) >= INACTIVE_PADDING, \
+        "inactive profiles too close to the scythe"
+    draw(area, grid)
+    return area
 
 
 def stack(pieces):
@@ -194,7 +224,7 @@ def main():
 
     for n in range(1, PROFILE_COUNT + 1):
         for state in ("off", "on"):
-            out += emit(f"art_bt{n}_{state}", pack(stack([scale(profiles(scythe, n, state == "on"))])))
+            out += emit(f"art_bt{n}_{state}", pack(profiles(scythe, n, state == "on")))
     out.append("\n// Indexed by [profile index][connected]\n")
     out.append(f"const lv_img_dsc_t *const art_bt_profiles[{PROFILE_COUNT}][2] = {{\n")
     for n in range(1, PROFILE_COUNT + 1):
