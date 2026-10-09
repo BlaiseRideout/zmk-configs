@@ -4,6 +4,10 @@
  * SPDX-License-Identifier: MIT
  */
 
+// Mouse key top speed in counts per second (ZMK default 600). Matches QMK's
+// MOUSEKEY_MOVE_DELTA 5 * MOUSEKEY_MAX_SPEED 8 = 40 counts per 16ms report.
+#define ZMK_POINTING_DEFAULT_MOVE_VAL 2500
+
 #include <behaviors.dtsi>
 #include <dt-bindings/zmk/bt.h>
 #include <dt-bindings/zmk/keys.h>
@@ -43,7 +47,7 @@
 &mmv {
     x-input-code = <INPUT_REL_X>;
     y-input-code = <INPUT_REL_Y>;
-    time-to-max-speed-ms = <45>;
+    time-to-max-speed-ms = <720>; // QMK MOUSEKEY_TIME_TO_MAX: 45 reports * 16ms
     acceleration-exponent = <1>;
 };
 
