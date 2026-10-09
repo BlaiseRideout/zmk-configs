@@ -15,14 +15,17 @@
 #include <dt-bindings/zmk/outputs.h>
 #include <dt-bindings/zmk/pointing.h>
 
+// Layer numbers follow the order of the layers in the keymap below, and a
+// higher layer wins. The base layer modes (DVORAK, GAME) come right after BASE,
+// as in the QMK keymap, so the layer-tap layers and BOARD work in every mode.
 #define BASE 0
-#define NUM 1
-#define NAV 2
-#define FUN 3
-#define MOUSE 4
-#define BOARD 5
-#define DVORAK 6
-#define GAME 7
+#define DVORAK 1
+#define GAME 2
+#define NUM 3
+#define NAV 4
+#define FUN 5
+#define MOUSE 6
+#define BOARD 7
 
 &mt {
   flavor = "tap-preferred";
@@ -194,6 +197,28 @@
 
         sensor-bindings = <&inc_dec_kp C_VOL_DN C_VOL_UP &inc_dec_kp PG_DN PG_UP>;
     };
+    // dvorak
+    DVORAK_LAYER {
+        display-name = "DVORAK";
+        bindings = <
+    &trans     &trans            &trans              &trans             &trans           &trans                 &trans &trans           &trans           &trans          &trans          &trans
+    &kp ESC    &mt_actl LALT SQT &mt_gui  LGUI COMMA &mt_actl LCTRL DOT &mt_lsft LSHFT P &kp Y                  &kp F  &mt_rsft RSHFT G &mt_actl RCTRL C &mt_gui  RGUI R &mt_actl LALT L &kp FSLH
+    &caps_word &mt_gui  LGUI A   &mt_actl LALT O     &mt_lsft LSHFT E   &mt_actl LCTRL U &kp I                  &kp D  &mt_actl RCTRL H &mt_rsft RSHFT T &mt_actl LALT N &mt_gui  RGUI S &kp MINUS
+    &kp LSHFT  &kp SEMI          &kp Q               &kp J              &kp K            &kp X &trans    &trans &kp B  &kp M            &kp W            &kp V           &kp Z           &kp RSHFT
+                                 &trans              &trans             &trans           &trans &trans   &trans &trans &trans           &trans           &trans
+        >;
+    };
+    // gaming
+    GAME_LAYER {
+        display-name = "GAME";
+        bindings = <
+    &kp ESC   &trans &trans &trans &trans &trans                      &trans &trans &trans    &trans  &trans   &trans
+    &kp TAB   &kp Q  &kp W  &kp E  &kp R  &kp T                       &kp Y  &kp U  &kp I     &kp O   &kp P    &kp LBKT
+    &kp LSHFT &kp A  &kp S  &kp D  &kp F  &kp G                       &kp H  &kp J  &kp K     &kp L   &kp SEMI &kp SQT
+    &kp LCTRL &kp Z  &kp X  &kp C  &kp V  &kp B  &trans        &trans              &kp N  &kp M  &kp COMMA &kp DOT &kp FSLH &kp RSHFT
+                     &trans &trans &trans &trans &lt NUM SPACE &lt_spc MOUSE SPACE &trans &trans &trans &trans
+        >;
+    };
     // num/sym
     NUM_LAYER {
         display-name = "NUM";
@@ -243,32 +268,10 @@
         display-name = "BOARD";
         bindings = <
     &trans      &trans       &trans       &trans       &trans       &trans                              &trans       &trans &trans &trans &trans &trans
-    &bootloader &tog BASE    &tog DVORAK  &tog GAME    &trans       &trans                              &trans       &trans &trans &trans &trans &bootloader
+    &bootloader &to BASE     &to DVORAK   &to GAME     &trans       &trans                              &trans       &trans &trans &trans &trans &bootloader
     &bt BT_CLR  &bt BT_SEL 0 &bt BT_SEL 1 &bt BT_SEL 2 &bt BT_SEL 3 &bt BT_SEL 4                        &out OUT_TOG &trans &trans &trans &trans &trans
     &trans      &trans       &trans       &trans       &trans       &trans       &trans  &trans         &trans       &trans &trans &trans &trans &trans
                              &trans       &trans       &trans       &tog FUN     &tog NUM  &tog MOUSE   &tog NAV     &trans &trans &trans
-        >;
-    };
-    // dvorak
-    DVORAK_LAYER {
-        display-name = "DVORAK";
-        bindings = <
-    &trans     &trans            &trans              &trans             &trans           &trans                 &trans &trans           &trans           &trans          &trans          &trans
-    &kp ESC    &mt_actl LALT SQT &mt_gui  LGUI COMMA &mt_actl LCTRL DOT &mt_lsft LSHFT P &kp Y                  &kp F  &mt_rsft RSHFT G &mt_actl RCTRL C &mt_gui  RGUI R &mt_actl LALT L &kp FSLH
-    &caps_word &mt_gui  LGUI A   &mt_actl LALT O     &mt_lsft LSHFT E   &mt_actl LCTRL U &kp I                  &kp D  &mt_actl RCTRL H &mt_rsft RSHFT T &mt_actl LALT N &mt_gui  RGUI S &kp MINUS
-    &kp LSHFT  &kp SEMI          &kp Q               &kp J              &kp K            &kp X &trans    &trans &kp B  &kp M            &kp W            &kp V           &kp Z           &kp RSHFT
-                                 &trans              &trans             &trans           &trans &trans   &trans &trans &trans           &trans           &trans
-        >;
-    };
-    // gaming
-    GAME_LAYER {
-        display-name = "GAME";
-        bindings = <
-    &kp ESC   &trans &trans &trans &trans &trans                      &trans &trans &trans    &trans  &trans   &trans
-    &kp TAB   &kp Q  &kp W  &kp E  &kp R  &kp T                       &kp Y  &kp U  &kp I     &kp O   &kp P    &kp LBKT
-    &kp LSHFT &kp A  &kp S  &kp D  &kp F  &kp G                       &kp H  &kp J  &kp K     &kp L   &kp SEMI &kp SQT
-    &kp LCTRL &kp Z  &kp X  &kp C  &kp V  &kp B  &trans        &trans              &kp N  &kp M  &kp COMMA &kp DOT &kp FSLH &kp RSHFT
-                     &trans &trans &trans &trans &lt NUM SPACE &lt_spc MOUSE SPACE &trans &trans &trans &trans
         >;
     };
   };
