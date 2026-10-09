@@ -185,11 +185,11 @@
     BASE_LAYER {
         display-name = "BASE";
         bindings = <
-    &kp GRAVE  &kp N1          &kp N2           &kp N3           &kp N4           &kp N5                       &kp N6 &kp N7           &kp N8           &kp N9          &kp N0             &kp EQUAL
-    &kp ESC    &mt_actl LALT Q &mt_gui  LGUI W &mt_actl LCTRL E &mt_lsft LSHFT R &kp T                        &kp Y  &mt_rsft RSHFT U &mt_actl RCTRL I &mt_gui  RGUI O &mt_actl LALT P    &kp LBKT
-    &caps_word &mt_gui  LGUI A &mt_actl LALT S &mt_lsft LSHFT D &mt_actl LCTRL F &kp G                        &kp H  &mt_actl RCTRL J &mt_rsft RSHFT K &mt_actl LALT L &mt_gui  RGUI SEMI &kp SQT
-    &kp LSHFT  &kp Z           &kp X            &kp C            &kp V            &kp B &kp C_MUTE  &kp C_PP &kp N  &kp M            &kp COMMA        &kp DOT         &kp FSLH           &kp RSHFT
-                               &kp LGUI         &kp LALT         &lt BOARD TAB    &lt FUN ESC &lt_bspc NUM BSPC  &lt_spc MOUSE SPACE &lt NAV ENTER &lt BOARD DEL &kp RALT &kp RGUI
+    &kp GRAVE  &kp N1          &kp N2           &kp N3           &kp N4           &kp N5                       &kp N6   &kp N7           &kp N8           &kp N9          &kp N0             &kp EQUAL
+    &kp ESC    &mt_actl LALT Q &mt_gui  LGUI W  &mt_actl LCTRL E &mt_lsft LSHFT R &kp T                        &kp Y    &mt_rsft RSHFT U &mt_actl RCTRL I &mt_gui  RGUI O &mt_actl LALT P    &kp LBKT
+    &caps_word &mt_gui  LGUI A &mt_actl LALT S  &mt_lsft LSHFT D &mt_actl LCTRL F &kp G                        &kp H    &mt_actl RCTRL J &mt_rsft RSHFT K &mt_actl LALT L &mt_gui  RGUI SEMI &kp SQT
+    &kp LSHFT  &kp Z           &kp X            &kp C            &kp V            &kp B &kp C_MUTE  &kp C_PP   &kp N    &kp M            &kp COMMA        &kp DOT         &kp FSLH           &kp RSHFT
+               &kp LGUI        &kp LALT         &lt BOARD TAB    &lt FUN ESC      &lt_bspc NUM BSPC &lt_spc MOUSE SPACE &lt NAV ENTER    &lt BOARD DEL    &kp RALT        &kp RGUI
         >;
 
         sensor-bindings = <&inc_dec_kp C_VOL_DN C_VOL_UP &inc_dec_kp PG_DN PG_UP>;
@@ -264,11 +264,11 @@
     GAME_LAYER {
         display-name = "GAME";
         bindings = <
-    &trans    &trans &trans &trans &trans        &trans                     &trans &trans &trans    &trans  &trans   &trans
-    &kp ESC   &kp Q  &kp W  &kp E  &kp R         &kp T                      &kp Y  &kp U  &kp I     &kp O   &kp P    &kp LBKT
-    &kp TAB   &kp A  &kp S  &kp D  &kp F         &kp G                      &kp H  &kp J  &kp K     &kp L   &kp SEMI &kp SQT
-    &kp LSHFT &kp Z  &kp X  &kp C  &kp V         &kp B &trans        &trans &kp N  &kp M  &kp COMMA &kp DOT &kp FSLH &kp RSHFT
-                     &trans &trans &lt BOARD TAB &lt FUN ESC &lt NUM SPACE  &lt_spc MOUSE SPACE &lt NAV ENTER &lt BOARD DEL &trans &trans
+    &kp ESC   &trans &trans &trans &trans &trans                      &trans &trans &trans    &trans  &trans   &trans
+    &kp TAB   &kp Q  &kp W  &kp E  &kp R  &kp T                       &kp Y  &kp U  &kp I     &kp O   &kp P    &kp LBKT
+    &kp LSHFT &kp A  &kp S  &kp D  &kp F  &kp G                       &kp H  &kp J  &kp K     &kp L   &kp SEMI &kp SQT
+    &kp LCTRL &kp Z  &kp X  &kp C  &kp V  &kp B  &trans        &trans              &kp N  &kp M  &kp COMMA &kp DOT &kp FSLH &kp RSHFT
+                     &trans &trans &trans &trans &lt NUM SPACE &lt_spc MOUSE SPACE &trans &trans &trans &trans
         >;
     };
   };
